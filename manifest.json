@@ -10,8 +10,14 @@
   "theme_color": "#2d6cdf",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='38' fill='%232d6cdf'/%3E%3Cpath d='M45 96h102M96 45v102M59 59l74 74M133 59l-74 74' stroke='white' stroke-width='15' stroke-linecap='round' opacity='.9'/%3E%3Ccircle cx='96' cy='96' r='26' fill='%23f3b33d'/%3E%3C/svg%3E",
-      "sizes": "192x192",
+      "src": "icons/icon-180.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }

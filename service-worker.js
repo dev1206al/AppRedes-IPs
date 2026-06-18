@@ -1,10 +1,12 @@
-const CACHE_NAME = "redes-ipv4-pwa-v2";
+const CACHE_NAME = "redes-ipv4-pwa-v3";
 const APP_FILES = [
   "./",
   "./index.html",
   "./styles.css?v=2",
   "./app.js?v=2",
-  "./manifest.json"
+  "./manifest.json",
+  "./icons/icon-180.svg",
+  "./icons/icon-512.svg"
 ];
 
 self.addEventListener("install", (event) => {
