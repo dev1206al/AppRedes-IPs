@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121416" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Subneteo">
+  <title>Calculadora de Subneteo y Enrutamiento Estático</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='34' fill='%232d6cdf'/%3E%3Cpath d='M43 91h94M89 43v94M55 55l70 70M125 55l-70 70' stroke='white' stroke-width='14' stroke-linecap='round' opacity='.9'/%3E%3Ccircle cx='90' cy='90' r='24' fill='%23f3b33d'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Redes IPv4</p>
+      <h1>Calculadora de Subneteo y Enrutamiento Estático</h1>
+    </div>
+    <div class="status-pill" id="pwaStatus">Lista offline</div>
+  </header>
+
+  <main class="shell">
+    <nav class="tabs" aria-label="Secciones principales">
+      <button class="tab-button active" type="button" data-tab="subnet">Subneteo IPv4</button>
+      <button class="tab-button" type="button" data-tab="routing">Enrutamiento estático</button>
+      <button class="tab-button" type="button" data-tab="saved">Guardados</button>
+    </nav>
+
+    <section class="panel active" id="subnetPanel">
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Sección 1</p>
+            <h2>Subneteo IPv4</h2>
+          </div>
+          <div class="actions compact-actions">
+            <button type="button" id="loadExample1">Ejemplo 1</button>
+            <button type="button" id="loadExample2">Ejemplo 2</button>
+          </div>
+        </div>
+
+        <form id="subnetForm" class="form-grid">
+          <label>
+            IP base
+            <input id="baseIp" inputmode="decimal" autocomplete="off" value="172.23.0.0" placeholder="172.23.0.0">
+          </label>
+          <label>
+            Máscara inicial CIDR
+            <input id="baseCidr" inputmode="numeric" autocomplete="off" value="16" placeholder="16">
+          </label>
+          <label>
+            Subredes necesarias
+            <input id="neededSubnets" type="number" min="1" value="240">
+          </label>
+          <label>
+            Subredes a mostrar
+            <select id="showCount">
+              <option value="8">8</option>
+              <option value="16">16</option>
+              <option value="32">32</option>
+              <option value="all">Todas</option>
+            </select>
+          </label>
+          <fieldset class="choice-group">
+            <legend>Servidores</legend>
+            <label class="radio-row">
+              <input type="radio" name="serverMode" value="separate" checked>
+              DNS, DHCP y WEB separados
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="serverMode" value="combined">
+              Un servidor con todos los servicios
+            </label>
+          </fieldset>
+          <div class="actions form-actions">
+            <button type="submit" class="primary">Calcular</button>
+            <button type="button" id="saveSubnet">Guardar ejercicio</button>
+            <button type="button" id="copySubnet">Copiar resultados</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <h2>Proceso</h2>
+          <span class="muted" id="subnetSummary">Sin cálculo todavía</span>
+        </div>
+        <div id="subnetErrors" class="message error" hidden></div>
+        <ol id="processList" class="process-list"></ol>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <h2>Resultado</h2>
+          <span class="muted" id="tableCount"></span>
+        </div>
+        <div id="subnetHighlights" class="highlight-grid"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Subred</th>
+                <th>Desde/red</th>
+                <th>Hasta/broadcast</th>
+                <th>Máscara</th>
+                <th>IPs asignables</th>
+                <th>Gateway</th>
+                <th>DNS</th>
+                <th>DHCP</th>
+                <th>WEB</th>
+              </tr>
+            </thead>
+            <tbody id="subnetTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel" id="routingPanel">
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Sección 2</p>
+            <h2>Enrutamiento estático por siguiente salto</h2>
+          </div>
+          <div class="actions compact-actions">
+            <button type="button" id="loadRoutingExample">Ejemplo</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Routers separados por coma
+            <input id="routerNames" value="R1, R2, R3" autocomplete="off">
+          </label>
+          <div class="actions form-actions">
+            <button type="button" id="syncRouters" class="primary">Actualizar routers</button>
+            <button type="button" id="saveRouting">Guardar ejercicio</button>
+            <button type="button" id="copyAllCommands">Copiar todos los comandos</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <h2>Redes LAN conectadas</h2>
+          <button type="button" id="addLan">Agregar LAN</button>
+        </div>
+        <div id="lanRows" class="rows"></div>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <h2>Enlaces entre routers</h2>
+          <button type="button" id="addLink">Agregar enlace</button>
+        </div>
+        <div id="linkRows" class="rows"></div>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <h2>Tablas de enrutamiento</h2>
+          <button type="button" id="calculateRoutes" class="primary">Generar rutas</button>
+        </div>
+        <div id="routingErrors" class="message error" hidden></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Etiqueta</th>
+                <th>Red</th>
+                <th>Máscara</th>
+                <th>Router</th>
+              </tr>
+            </thead>
+            <tbody id="knownNetworksTable"></tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Router</th>
+                <th>Red destino</th>
+                <th>Máscara</th>
+                <th>Siguiente salto</th>
+                <th>Explicación</th>
+              </tr>
+            </thead>
+            <tbody id="routesTable"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <h2>Comandos Cisco</h2>
+          <button type="button" id="copyRouteTable">Copiar tabla de rutas</button>
+        </div>
+        <div id="commandsOutput" class="commands"></div>
+      </article>
+    </section>
+
+    <section class="panel" id="savedPanel">
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">LocalStorage</p>
+            <h2>Ejercicios guardados</h2>
+          </div>
+          <button type="button" id="clearData" class="danger">Borrar datos</button>
+        </div>
+        <div id="savedList" class="saved-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js?v=2" defer></script>
+</body>
+</html>
