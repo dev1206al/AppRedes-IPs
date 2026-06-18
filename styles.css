@@ -1,33 +1,39 @@
 :root {
   color-scheme: light dark;
-  --bg: #f7f7f2;
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #eef3f1;
-  --text: #182024;
-  --muted: #66727a;
-  --line: #d9dfdd;
-  --primary: #2d6cdf;
+  --surface-2: #eef6ff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --line: #dbe4ef;
+  --primary: #2563eb;
   --primary-ink: #ffffff;
-  --accent: #188b67;
-  --warn: #b46b09;
-  --danger: #b83232;
-  --shadow: 0 12px 30px rgba(22, 31, 36, .08);
+  --accent: #06b6d4;
+  --success: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --terminal: #0b1120;
+  --terminal-text: #d1fae5;
+  --shadow: 0 8px 24px rgba(15, 23, 42, .08);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121416;
-    --surface: #1b1f22;
-    --surface-2: #242a2d;
-    --text: #edf1f2;
-    --muted: #a5b0b6;
-    --line: #333b40;
-    --primary: #79a9ff;
-    --primary-ink: #101317;
-    --accent: #5ed0a7;
-    --warn: #f0b756;
-    --danger: #ff8b8b;
-    --shadow: 0 14px 36px rgba(0, 0, 0, .3);
+    --bg: #0b1120;
+    --surface: #111827;
+    --surface-2: #1e293b;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --line: #263449;
+    --primary: #60a5fa;
+    --primary-ink: #0b1120;
+    --accent: #22d3ee;
+    --success: #4ade80;
+    --warn: #f59e0b;
+    --danger: #f87171;
+    --terminal: #050816;
+    --terminal-text: #bbf7d0;
+    --shadow: 0 10px 28px rgba(0, 0, 0, .26);
   }
 }
 
@@ -156,6 +162,10 @@ pre {
   line-height: 1.08;
 }
 
+.brand-block {
+  min-width: 0;
+}
+
 .app-subtitle {
   margin: 6px 0 0;
   color: var(--muted);
@@ -183,6 +193,30 @@ pre {
   font-weight: 800;
 }
 
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.menu-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  margin: 2px 0;
+  border-radius: 999px;
+  background: var(--text);
+}
+
 .shell {
   width: min(1160px, 100%);
   min-width: 0;
@@ -192,15 +226,70 @@ pre {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px;
+  background: var(--surface-2);
   margin-bottom: 14px;
+}
+
+.tab-button {
+  border-color: transparent;
+  background: transparent;
 }
 
 .tab-button.active {
   border-color: transparent;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 8px rgba(15, 23, 42, .08);
+}
+
+.mode-menu {
+  display: none;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.mode-menu[hidden] {
+  display: none;
+}
+
+.mode-menu:not([hidden]) {
+  display: grid;
+}
+
+.mode-option {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.mode-option.active {
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+.slogan-band {
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 60%);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 88%), color-mix(in srgb, var(--accent), transparent 86%));
+}
+
+.slogan-band strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.04rem;
 }
 
 .panel {
@@ -370,7 +459,7 @@ pre {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
 .mini-card header {
@@ -401,6 +490,18 @@ pre {
 .mini-card dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.mini-card dl div:nth-child(4) {
+  border: 1px solid color-mix(in srgb, var(--primary), transparent 68%);
+  border-radius: 8px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--primary), transparent 91%);
+}
+
+.mini-card dl div:nth-child(n+5) {
+  border-left: 3px solid var(--accent);
+  padding-left: 8px;
 }
 
 .tag {
@@ -505,6 +606,21 @@ pre {
   overflow: hidden;
 }
 
+.terminal-card {
+  background: var(--terminal);
+}
+
+.terminal-card summary {
+  padding: 10px 12px;
+  color: var(--terminal-text);
+}
+
+.terminal-card p {
+  margin: 0;
+  padding: 0 12px 10px;
+  color: color-mix(in srgb, var(--terminal-text), transparent 25%);
+}
+
 .command-card header {
   display: flex;
   justify-content: space-between;
@@ -524,6 +640,17 @@ pre {
   padding: 12px;
   overflow-x: auto;
   white-space: pre;
+}
+
+.terminal-card pre,
+.command-card pre {
+  background: var(--terminal);
+  color: var(--terminal-text);
+}
+
+.command-guide {
+  display: grid;
+  gap: 12px;
 }
 
 .saved-list {
@@ -568,14 +695,30 @@ pre {
 
 @media (max-width: 760px) {
   .app-header {
-    align-items: flex-start;
+    align-items: center;
+    padding-bottom: 10px;
+  }
+
+  .app-header h1 {
+    font-size: 1.28rem;
+  }
+
+  .app-subtitle {
+    display: none;
   }
 
   .status-pill {
     display: none;
   }
 
-  .tabs,
+  .mode-menu:not([hidden]) {
+    display: grid;
+  }
+
+  .tabs {
+    display: none;
+  }
+
   .form-grid,
   .highlight-grid,
   .row-card,
@@ -602,6 +745,11 @@ pre {
   .actions button,
   .compact-actions button {
     flex: 1 1 130px;
+  }
+
+  .form-actions .primary {
+    flex-basis: 100%;
+    min-height: 52px;
   }
 
   .remove-row {

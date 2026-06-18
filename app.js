@@ -14,10 +14,13 @@ const state = {
 document.addEventListener("DOMContentLoaded", () => {
   restoreState();
   bindTabs();
+  bindMenu();
   bindSubnet();
   bindRouting();
+  bindCiscoBasics();
   bindStorageButtons();
   renderSaved();
+  renderCiscoBasics();
   registerServiceWorker();
   renderRouterRows();
   calculateSubnet();
@@ -25,14 +28,26 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bindTabs() {
-  $$(".tab-button").forEach((button) => {
+  $$(".tab-button, .mode-option").forEach((button) => {
     button.addEventListener("click", () => {
-      $$(".tab-button").forEach((item) => item.classList.remove("active"));
-      $$(".panel").forEach((panel) => panel.classList.remove("active"));
-      button.classList.add("active");
-      $(`#${button.dataset.tab}Panel`).classList.add("active");
+      activateTab(button.dataset.tab);
+      closeModeMenu();
     });
   });
+}
+
+function bindMenu() {
+  $("#menuToggle").addEventListener("click", () => {
+    const menu = $("#modeMenu");
+    const isOpen = !menu.hidden;
+    menu.hidden = isOpen;
+    $("#menuToggle").setAttribute("aria-expanded", String(!isOpen));
+  });
+}
+
+function closeModeMenu() {
+  $("#modeMenu").hidden = true;
+  $("#menuToggle").setAttribute("aria-expanded", "false");
 }
 
 function bindSubnet() {
@@ -63,6 +78,10 @@ function bindRouting() {
   $$(".disclosure summary button").forEach((button) => {
     button.addEventListener("click", (event) => event.stopPropagation());
   });
+}
+
+function bindCiscoBasics() {
+  $("#copyCiscoBasics").addEventListener("click", () => copyText(buildCiscoBasicsText()));
 }
 
 function bindStorageButtons() {
@@ -427,6 +446,19 @@ function renderRoutes() {
   });
 }
 
+function renderCiscoBasics() {
+  $("#ciscoBasics").innerHTML = CISCO_BASICS.map((group) => `
+    <details class="command-card terminal-card" open>
+      <summary>
+        <span>${escapeHtml(group.title)}</span>
+        <span class="muted">${escapeHtml(group.device)}</span>
+      </summary>
+      <p>${escapeHtml(group.note)}</p>
+      <pre>${escapeHtml(group.commands.join("\n"))}</pre>
+    </details>
+  `).join("");
+}
+
 function readLans() {
   const lans = $$(".lan-row").map((row) => ({
     label: row.querySelector(".lan-label").value.trim() || "LAN",
@@ -598,7 +630,11 @@ function loadSaved(id) {
 }
 
 function activateTab(name) {
-  document.querySelector(`.tab-button[data-tab='${name}']`).click();
+  $$(".tab-button, .mode-option").forEach((item) => {
+    item.classList.toggle("active", item.dataset.tab === name);
+  });
+  $$(".panel").forEach((panel) => panel.classList.remove("active"));
+  $(`#${name}Panel`).classList.add("active");
 }
 
 function persistState() {
@@ -655,6 +691,14 @@ function buildRouteTableText() {
     "Router\tRed destino\tMáscara\tSiguiente salto\tExplicación",
     ...result.routes.map((route) => `${route.router}\t${route.network}\t${route.mask}\t${route.nextHop}\t${route.explanation}`)
   ].join("\n");
+}
+
+function buildCiscoBasicsText() {
+  return CISCO_BASICS.map((group) => [
+    `${group.title} (${group.device})`,
+    group.note,
+    ...group.commands
+  ].join("\n")).join("\n\n");
 }
 
 function buildPacketTracerText() {
@@ -798,3 +842,66 @@ function registerServiceWorker() {
       $("#pwaStatus").textContent = "Offline no disponible";
     });
 }
+
+const CISCO_BASICS = [
+  {
+    title: "Entrar a configuración global",
+    device: "Router o switch",
+    note: "Se usa antes de cambiar interfaces, rutas, hostname o servicios.",
+    commands: ["enable", "configure terminal"]
+  },
+  {
+    title: "Cambiar nombre del equipo",
+    device: "Router o switch",
+    note: "Sirve para identificar R1, R2, SW1, etc. en la práctica.",
+    commands: ["enable", "configure terminal", "hostname R1"]
+  },
+  {
+    title: "Configurar gateway de una LAN",
+    device: "Router",
+    note: "Se aplica en la interfaz conectada a la LAN. Cambia g0/0 si tu puerto es otro.",
+    commands: ["enable", "configure terminal", "interface g0/0", "ip address 172.23.6.1 255.255.255.0", "no shutdown", "exit"]
+  },
+  {
+    title: "Configurar enlace entre routers",
+    device: "Router",
+    note: "Se usa en interfaces punto a punto entre routers.",
+    commands: ["enable", "configure terminal", "interface g0/1", "ip address 10.0.0.1 255.255.255.252", "no shutdown", "exit"]
+  },
+  {
+    title: "Crear ruta estática por siguiente salto",
+    device: "Router",
+    note: "Es el comando central de los ejercicios de enrutamiento estático.",
+    commands: ["enable", "configure terminal", "ip route 172.23.7.0 255.255.255.0 10.0.0.2"]
+  },
+  {
+    title: "Ver interfaces y estado",
+    device: "Router o switch",
+    note: "Útil para revisar si una interfaz está up/up y si la IP quedó correcta.",
+    commands: ["show ip interface brief"]
+  },
+  {
+    title: "Ver tabla de enrutamiento",
+    device: "Router",
+    note: "Permite confirmar redes conectadas y rutas estáticas marcadas con S.",
+    commands: ["show ip route"]
+  },
+  {
+    title: "Probar conectividad",
+    device: "PC o router",
+    note: "En PC se usa desde Command Prompt; en router desde modo privilegiado.",
+    commands: ["PC: ping 172.23.7.1", "PC: tracert 172.23.7.1", "Router: ping 172.23.7.1", "Router: traceroute 172.23.7.1"]
+  },
+  {
+    title: "Guardar configuración",
+    device: "Router o switch",
+    note: "Evita perder cambios al reiniciar el equipo.",
+    commands: ["end", "write memory"]
+  },
+  {
+    title: "Configurar PC manualmente",
+    device: "PC en Packet Tracer",
+    note: "Se hace en Desktop > IP Configuration, no en CLI.",
+    commands: ["IP address: 172.23.6.2", "Subnet mask: 255.255.255.0", "Default gateway: 172.23.6.1", "DNS server: 172.23.6.252"]
+  }
+];
