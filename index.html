@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="SubnetLab">
   <title>SubnetLab</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
@@ -22,6 +22,7 @@
     <div>
       <p class="eyebrow">Redes IPv4</p>
       <h1>SubnetLab</h1>
+      <p class="app-subtitle">Subneteo IPv4 y rutas estáticas Cisco paso a paso</p>
     </div>
     <div class="status-pill" id="pwaStatus">Lista offline</div>
   </header>
@@ -87,14 +88,14 @@
         </form>
       </article>
 
-      <article class="card">
-        <div class="section-title">
-          <h2>Proceso</h2>
+      <details class="card disclosure" open>
+        <summary>
+          <span>Proceso</span>
           <span class="muted" id="subnetSummary">Sin cálculo todavía</span>
-        </div>
+        </summary>
         <div id="subnetErrors" class="message error" hidden></div>
         <ol id="processList" class="process-list"></ol>
-      </article>
+      </details>
 
       <article class="card">
         <div class="section-title">
@@ -120,7 +121,19 @@
             <tbody id="subnetTable"></tbody>
           </table>
         </div>
+        <div id="subnetCards" class="subnet-cards"></div>
       </article>
+
+      <details class="card disclosure">
+        <summary>
+          <span>Comandos a usar en Cisco Packet Tracer por equipo</span>
+          <span class="muted">Plantillas para las subredes mostradas</span>
+        </summary>
+        <div class="actions">
+          <button type="button" id="copyPacketTracer">Copiar comandos por equipo</button>
+        </div>
+        <div id="packetTracerOutput" class="commands"></div>
+      </details>
     </section>
 
     <section class="panel" id="routingPanel">
@@ -148,21 +161,21 @@
         </div>
       </article>
 
-      <article class="card">
-        <div class="section-title">
-          <h2>Redes LAN conectadas</h2>
+      <details class="card disclosure">
+        <summary>
+          <span>Redes LAN conectadas</span>
           <button type="button" id="addLan">Agregar LAN</button>
-        </div>
+        </summary>
         <div id="lanRows" class="rows"></div>
-      </article>
+      </details>
 
-      <article class="card">
-        <div class="section-title">
-          <h2>Enlaces entre routers</h2>
+      <details class="card disclosure">
+        <summary>
+          <span>Enlaces entre routers</span>
           <button type="button" id="addLink">Agregar enlace</button>
-        </div>
+        </summary>
         <div id="linkRows" class="rows"></div>
-      </article>
+      </details>
 
       <article class="card">
         <div class="section-title">
@@ -170,6 +183,7 @@
           <button type="button" id="calculateRoutes" class="primary">Generar rutas</button>
         </div>
         <div id="routingErrors" class="message error" hidden></div>
+        <div id="topologyView" class="topology"></div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -199,13 +213,13 @@
         </div>
       </article>
 
-      <article class="card">
-        <div class="section-title">
-          <h2>Comandos Cisco</h2>
+      <details class="card disclosure" open>
+        <summary>
+          <span>Comandos Cisco</span>
           <button type="button" id="copyRouteTable">Copiar tabla de rutas</button>
-        </div>
+        </summary>
         <div id="commandsOutput" class="commands"></div>
-      </article>
+      </details>
     </section>
 
     <section class="panel" id="savedPanel">
@@ -224,6 +238,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=2" defer></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>

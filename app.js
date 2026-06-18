@@ -43,6 +43,7 @@ function bindSubnet() {
   $("#loadExample1").addEventListener("click", () => loadSubnetExample("172.23.0.0", 16, 240));
   $("#loadExample2").addEventListener("click", () => loadSubnetExample("25.0.0.0", 8, 625));
   $("#copySubnet").addEventListener("click", () => copyText(buildSubnetText()));
+  $("#copyPacketTracer").addEventListener("click", () => copyText(buildPacketTracerText()));
   $("#saveSubnet").addEventListener("click", () => saveExercise("subnet"));
 }
 
@@ -59,6 +60,9 @@ function bindRouting() {
   $("#copyRouteTable").addEventListener("click", () => copyText(buildRouteTableText()));
   $("#saveRouting").addEventListener("click", () => saveExercise("routing"));
   $("#loadRoutingExample").addEventListener("click", loadRoutingExample);
+  $$(".disclosure summary button").forEach((button) => {
+    button.addEventListener("click", (event) => event.stopPropagation());
+  });
 }
 
 function bindStorageButtons() {
@@ -174,6 +178,8 @@ function renderSubnetResult() {
   $("#processList").innerHTML = "";
   $("#subnetHighlights").innerHTML = "";
   $("#subnetTable").innerHTML = "";
+  $("#subnetCards").innerHTML = "";
+  $("#packetTracerOutput").innerHTML = "";
   $("#tableCount").textContent = "";
 
   if (!result) {
@@ -223,6 +229,44 @@ function renderSubnetResult() {
       <td>${subnet.web}</td>
     </tr>
   `).join("");
+
+  $("#subnetCards").innerHTML = result.subnets.map((subnet) => `
+    <section class="mini-card">
+      <header>
+        <strong>Subred ${subnet.number}</strong>
+        <span class="tag">/${result.newCidr}</span>
+      </header>
+      <dl>
+        <div><dt>Red</dt><dd>${intToIp(subnet.red)}</dd></div>
+        <div><dt>Broadcast</dt><dd>${intToIp(subnet.broadcast)}</dd></div>
+        <div><dt>Asignables</dt><dd>${subnet.range}</dd></div>
+        <div><dt>Gateway</dt><dd><strong>${subnet.gateway}</strong></dd></div>
+        <div><dt>DNS</dt><dd>${subnet.dns}</dd></div>
+        <div><dt>DHCP</dt><dd>${subnet.dhcp}</dd></div>
+        <div><dt>WEB</dt><dd>${subnet.web}</dd></div>
+      </dl>
+    </section>
+  `).join("");
+
+  $("#packetTracerOutput").innerHTML = result.subnets.map((subnet) => {
+    const text = buildPacketTracerBlock(result, subnet);
+    return `
+      <section class="command-card">
+        <header>
+          <h3>Subred ${subnet.number} · ${intToIp(subnet.red)}/${result.newCidr}</h3>
+          <button type="button" data-subnet="${subnet.number}">Copiar</button>
+        </header>
+        <pre>${escapeHtml(text)}</pre>
+      </section>
+    `;
+  }).join("");
+
+  $$("#packetTracerOutput button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const subnet = result.subnets.find((item) => String(item.number) === button.dataset.subnet);
+      if (subnet) copyText(buildPacketTracerBlock(result, subnet));
+    });
+  });
 }
 
 function renderRouterRows() {
@@ -338,7 +382,10 @@ function renderRoutes() {
   $("#knownNetworksTable").innerHTML = "";
   $("#routesTable").innerHTML = "";
   $("#commandsOutput").innerHTML = "";
+  $("#topologyView").innerHTML = "";
   if (!result) return;
+
+  $("#topologyView").innerHTML = renderTopology(result);
 
   $("#knownNetworksTable").innerHTML = result.lans.map((lan) => `
     <tr>
@@ -477,7 +524,7 @@ function renderSaved() {
     <div class="saved-item">
       <div>
         <strong>${escapeHtml(item.title)}</strong>
-        <div class="muted">${item.type === "subnet" ? "Subneteo" : "Enrutamiento"} · ${escapeHtml(item.date)}</div>
+        <div class="muted">${escapeHtml(savedMeta(item))} · ${escapeHtml(item.date)}</div>
       </div>
       <button type="button" data-id="${escapeAttr(item.id)}">Cargar</button>
     </div>
@@ -485,6 +532,44 @@ function renderSaved() {
   $$("#savedList button").forEach((button) => {
     button.addEventListener("click", () => loadSaved(button.dataset.id));
   });
+}
+
+function renderTopology(result) {
+  const links = result.links.map((link) => `
+    <div class="topology-link">
+      <span class="node">${escapeHtml(link.a)}</span>
+      <span class="line">${escapeHtml(link.ipA)} ↔ ${escapeHtml(link.ipB)}</span>
+      <span class="node">${escapeHtml(link.b)}</span>
+    </div>
+  `).join("");
+  const lans = result.lans.map((lan) => `
+    <div class="topology-lan">
+      <span class="tag">${escapeHtml(lan.router)}</span>
+      <strong>${escapeHtml(lan.label)}</strong>
+      <span>${lan.network}/${maskToCidr(lan.mask)}</span>
+    </div>
+  `).join("");
+  return `
+    <div class="topology-grid">
+      <section>
+        <h3>Topología</h3>
+        ${links || "<p class=\"muted\">Sin enlaces entre routers.</p>"}
+      </section>
+      <section>
+        <h3>LANs</h3>
+        <div class="topology-lans">${lans}</div>
+      </section>
+    </div>
+  `;
+}
+
+function savedMeta(item) {
+  if (item.type === "subnet") {
+    const data = item.payload;
+    return `Subneteo · /${data.newCidr} · ${data.subnets.length} filas`;
+  }
+  const data = item.payload;
+  return `Enrutamiento · ${data.routers.length} routers · ${data.routes.length} rutas`;
 }
 
 function loadSaved(id) {
@@ -569,6 +654,50 @@ function buildRouteTableText() {
   return [
     "Router\tRed destino\tMáscara\tSiguiente salto\tExplicación",
     ...result.routes.map((route) => `${route.router}\t${route.network}\t${route.mask}\t${route.nextHop}\t${route.explanation}`)
+  ].join("\n");
+}
+
+function buildPacketTracerText() {
+  const result = state.lastSubnet;
+  if (!result) return "Sin comandos por equipo.";
+  return result.subnets.map((subnet) => buildPacketTracerBlock(result, subnet)).join("\n\n");
+}
+
+function buildPacketTracerBlock(result, subnet) {
+  const network = intToIp(subnet.red);
+  const broadcast = intToIp(subnet.broadcast);
+  const serverMode = result.input.serverMode === "combined" ? "Servidor único" : "Servidores separados";
+  const clientIpInt = subnet.red + 2;
+  const lastUsable = subnet.broadcast - 1;
+  const clientIp = clientIpInt < lastUsable ? intToIp(clientIpInt) : "Asignar manualmente si hay IP libre";
+  const dnsLine = result.input.serverMode === "combined"
+    ? `Servidor único: ${subnet.web} / ${result.mask} / gateway ${subnet.gateway} / DNS ${subnet.web}`
+    : `DNS: ${subnet.dns} / DHCP: ${subnet.dhcp} / WEB: ${subnet.web}`;
+
+  return [
+    `SUBRED ${subnet.number}: ${network}/${result.newCidr}`,
+    `Máscara: ${result.mask}`,
+    `Broadcast: ${broadcast}`,
+    `Modo: ${serverMode}`,
+    "",
+    "Router o gateway",
+    "enable",
+    "configure terminal",
+    "interface g0/0",
+    `ip address ${subnet.gateway} ${result.mask}`,
+    "no shutdown",
+    "exit",
+    "end",
+    "write memory",
+    "",
+    "PC cliente",
+    `IP address: ${clientIp}`,
+    `Subnet mask: ${result.mask}`,
+    `Default gateway: ${subnet.gateway}`,
+    `DNS server: ${subnet.dns}`,
+    "",
+    "Servidores",
+    dnsLine
   ].join("\n");
 }
 

@@ -156,6 +156,13 @@ pre {
   line-height: 1.08;
 }
 
+.app-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: .95rem;
+  font-weight: 650;
+}
+
 .eyebrow {
   margin: 0;
   color: var(--accent);
@@ -214,6 +221,29 @@ pre {
   padding: 16px;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.disclosure summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+
+.disclosure summary::marker {
+  color: var(--primary);
+}
+
+.disclosure summary + * {
+  margin-top: 14px;
+}
+
+.disclosure[open] summary {
+  margin-bottom: 12px;
 }
 
 .section-title {
@@ -284,12 +314,18 @@ pre {
 }
 
 .process-list {
+  display: grid;
+  gap: 8px;
   margin: 0;
-  padding-left: 22px;
+  padding-left: 0;
+  list-style: none;
 }
 
 .process-list li {
-  margin: 9px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface-2);
 }
 
 .highlight-grid {
@@ -324,6 +360,49 @@ pre {
   margin-top: 12px;
 }
 
+.subnet-cards {
+  display: none;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.mini-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-2);
+}
+
+.mini-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.mini-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.mini-card dl div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.mini-card dt {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.mini-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .tag {
   display: inline-block;
   border-radius: 999px;
@@ -331,6 +410,62 @@ pre {
   background: color-mix(in srgb, var(--primary), transparent 84%);
   color: var(--primary);
   font-weight: 900;
+}
+
+.topology {
+  margin-bottom: 12px;
+}
+
+.topology-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.topology-grid section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-2);
+}
+
+.topology-grid h3 {
+  margin: 0 0 10px;
+  font-size: .98rem;
+}
+
+.topology-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.node {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: var(--surface);
+  font-weight: 900;
+}
+
+.line {
+  color: var(--muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.topology-lans {
+  display: grid;
+  gap: 8px;
+}
+
+.topology-lan {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
 }
 
 .rows {
@@ -444,7 +579,8 @@ pre {
   .form-grid,
   .highlight-grid,
   .row-card,
-  .link-row {
+  .link-row,
+  .topology-grid {
     grid-template-columns: 1fr;
   }
 
@@ -470,5 +606,26 @@ pre {
 
   .remove-row {
     width: 100%;
+  }
+
+  .table-wrap {
+    display: none;
+  }
+
+  .subnet-cards {
+    display: grid;
+  }
+
+  .disclosure summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .disclosure summary button {
+    width: 100%;
+  }
+
+  .topology-lan {
+    grid-template-columns: 1fr;
   }
 }

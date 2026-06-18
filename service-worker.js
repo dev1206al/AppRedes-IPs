@@ -1,9 +1,9 @@
-const CACHE_NAME = "redes-ipv4-pwa-v5";
+const CACHE_NAME = "redes-ipv4-pwa-v6";
 const APP_FILES = [
   "./",
   "./index.html",
-  "./styles.css?v=2",
-  "./app.js?v=2",
+  "./styles.css?v=3",
+  "./app.js?v=3",
   "./manifest.json",
   "./favicon.ico",
   "./favicon.png",
