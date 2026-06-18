@@ -208,13 +208,9 @@ pre {
   padding: 0;
 }
 
-.menu-toggle span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  margin: 2px 0;
-  border-radius: 999px;
-  background: var(--text);
+.menu-toggle img {
+  width: 24px;
+  height: 24px;
 }
 
 .shell {
