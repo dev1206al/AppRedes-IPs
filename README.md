@@ -1,4 +1,4 @@
-# Calculadora de Subneteo y Enrutamiento Estático
+# SubnetLab
 
 PWA offline para clase de Redes. Calcula subneteo IPv4 paso a paso y genera rutas estáticas Cisco por IP de siguiente salto.
 
