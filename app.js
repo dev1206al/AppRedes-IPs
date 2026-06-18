@@ -14,10 +14,13 @@ const state = {
 document.addEventListener("DOMContentLoaded", () => {
   restoreState();
   bindTabs();
+  bindMenu();
   bindSubnet();
   bindRouting();
+  bindCiscoBasics();
   bindStorageButtons();
   renderSaved();
+  renderCiscoBasics();
   registerServiceWorker();
   renderRouterRows();
   calculateSubnet();
@@ -25,14 +28,26 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bindTabs() {
-  $$(".tab-button").forEach((button) => {
+  $$(".tab-button, .mode-option").forEach((button) => {
     button.addEventListener("click", () => {
-      $$(".tab-button").forEach((item) => item.classList.remove("active"));
-      $$(".panel").forEach((panel) => panel.classList.remove("active"));
-      button.classList.add("active");
-      $(`#${button.dataset.tab}Panel`).classList.add("active");
+      activateTab(button.dataset.tab);
+      closeModeMenu();
     });
   });
+}
+
+function bindMenu() {
+  $("#menuToggle").addEventListener("click", () => {
+    const menu = $("#modeMenu");
+    const isOpen = !menu.hidden;
+    menu.hidden = isOpen;
+    $("#menuToggle").setAttribute("aria-expanded", String(!isOpen));
+  });
+}
+
+function closeModeMenu() {
+  $("#modeMenu").hidden = true;
+  $("#menuToggle").setAttribute("aria-expanded", "false");
 }
 
 function bindSubnet() {
@@ -43,6 +58,7 @@ function bindSubnet() {
   $("#loadExample1").addEventListener("click", () => loadSubnetExample("172.23.0.0", 16, 240));
   $("#loadExample2").addEventListener("click", () => loadSubnetExample("25.0.0.0", 8, 625));
   $("#copySubnet").addEventListener("click", () => copyText(buildSubnetText()));
+  $("#copyPacketTracer").addEventListener("click", () => copyText(buildPacketTracerText()));
   $("#saveSubnet").addEventListener("click", () => saveExercise("subnet"));
 }
 
@@ -59,6 +75,13 @@ function bindRouting() {
   $("#copyRouteTable").addEventListener("click", () => copyText(buildRouteTableText()));
   $("#saveRouting").addEventListener("click", () => saveExercise("routing"));
   $("#loadRoutingExample").addEventListener("click", loadRoutingExample);
+  $$(".disclosure summary button").forEach((button) => {
+    button.addEventListener("click", (event) => event.stopPropagation());
+  });
+}
+
+function bindCiscoBasics() {
+  $("#copyCiscoBasics").addEventListener("click", () => copyText(buildCiscoBasicsText()));
 }
 
 function bindStorageButtons() {
@@ -174,6 +197,8 @@ function renderSubnetResult() {
   $("#processList").innerHTML = "";
   $("#subnetHighlights").innerHTML = "";
   $("#subnetTable").innerHTML = "";
+  $("#subnetCards").innerHTML = "";
+  $("#packetTracerOutput").innerHTML = "";
   $("#tableCount").textContent = "";
 
   if (!result) {
@@ -223,6 +248,44 @@ function renderSubnetResult() {
       <td>${subnet.web}</td>
     </tr>
   `).join("");
+
+  $("#subnetCards").innerHTML = result.subnets.map((subnet) => `
+    <section class="mini-card">
+      <header>
+        <strong>Subred ${subnet.number}</strong>
+        <span class="tag">/${result.newCidr}</span>
+      </header>
+      <dl>
+        <div><dt>Red</dt><dd>${intToIp(subnet.red)}</dd></div>
+        <div><dt>Broadcast</dt><dd>${intToIp(subnet.broadcast)}</dd></div>
+        <div><dt>Asignables</dt><dd>${subnet.range}</dd></div>
+        <div><dt>Gateway</dt><dd><strong>${subnet.gateway}</strong></dd></div>
+        <div><dt>DNS</dt><dd>${subnet.dns}</dd></div>
+        <div><dt>DHCP</dt><dd>${subnet.dhcp}</dd></div>
+        <div><dt>WEB</dt><dd>${subnet.web}</dd></div>
+      </dl>
+    </section>
+  `).join("");
+
+  $("#packetTracerOutput").innerHTML = result.subnets.map((subnet) => {
+    const text = buildPacketTracerBlock(result, subnet);
+    return `
+      <section class="command-card">
+        <header>
+          <h3>Subred ${subnet.number} · ${intToIp(subnet.red)}/${result.newCidr}</h3>
+          <button type="button" data-subnet="${subnet.number}">Copiar</button>
+        </header>
+        <pre>${escapeHtml(text)}</pre>
+      </section>
+    `;
+  }).join("");
+
+  $$("#packetTracerOutput button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const subnet = result.subnets.find((item) => String(item.number) === button.dataset.subnet);
+      if (subnet) copyText(buildPacketTracerBlock(result, subnet));
+    });
+  });
 }
 
 function renderRouterRows() {
@@ -338,7 +401,10 @@ function renderRoutes() {
   $("#knownNetworksTable").innerHTML = "";
   $("#routesTable").innerHTML = "";
   $("#commandsOutput").innerHTML = "";
+  $("#topologyView").innerHTML = "";
   if (!result) return;
+
+  $("#topologyView").innerHTML = renderTopology(result);
 
   $("#knownNetworksTable").innerHTML = result.lans.map((lan) => `
     <tr>
@@ -378,6 +444,19 @@ function renderRoutes() {
       copyText(result.commandsByRouter[router].join("\n"));
     });
   });
+}
+
+function renderCiscoBasics() {
+  $("#ciscoBasics").innerHTML = CISCO_BASICS.map((group) => `
+    <details class="command-card terminal-card" open>
+      <summary>
+        <span>${escapeHtml(group.title)}</span>
+        <span class="muted">${escapeHtml(group.device)}</span>
+      </summary>
+      <p>${escapeHtml(group.note)}</p>
+      <pre>${escapeHtml(group.commands.join("\n"))}</pre>
+    </details>
+  `).join("");
 }
 
 function readLans() {
@@ -477,7 +556,7 @@ function renderSaved() {
     <div class="saved-item">
       <div>
         <strong>${escapeHtml(item.title)}</strong>
-        <div class="muted">${item.type === "subnet" ? "Subneteo" : "Enrutamiento"} · ${escapeHtml(item.date)}</div>
+        <div class="muted">${escapeHtml(savedMeta(item))} · ${escapeHtml(item.date)}</div>
       </div>
       <button type="button" data-id="${escapeAttr(item.id)}">Cargar</button>
     </div>
@@ -485,6 +564,44 @@ function renderSaved() {
   $$("#savedList button").forEach((button) => {
     button.addEventListener("click", () => loadSaved(button.dataset.id));
   });
+}
+
+function renderTopology(result) {
+  const links = result.links.map((link) => `
+    <div class="topology-link">
+      <span class="node">${escapeHtml(link.a)}</span>
+      <span class="line">${escapeHtml(link.ipA)} ↔ ${escapeHtml(link.ipB)}</span>
+      <span class="node">${escapeHtml(link.b)}</span>
+    </div>
+  `).join("");
+  const lans = result.lans.map((lan) => `
+    <div class="topology-lan">
+      <span class="tag">${escapeHtml(lan.router)}</span>
+      <strong>${escapeHtml(lan.label)}</strong>
+      <span>${lan.network}/${maskToCidr(lan.mask)}</span>
+    </div>
+  `).join("");
+  return `
+    <div class="topology-grid">
+      <section>
+        <h3>Topología</h3>
+        ${links || "<p class=\"muted\">Sin enlaces entre routers.</p>"}
+      </section>
+      <section>
+        <h3>LANs</h3>
+        <div class="topology-lans">${lans}</div>
+      </section>
+    </div>
+  `;
+}
+
+function savedMeta(item) {
+  if (item.type === "subnet") {
+    const data = item.payload;
+    return `Subneteo · /${data.newCidr} · ${data.subnets.length} filas`;
+  }
+  const data = item.payload;
+  return `Enrutamiento · ${data.routers.length} routers · ${data.routes.length} rutas`;
 }
 
 function loadSaved(id) {
@@ -513,7 +630,11 @@ function loadSaved(id) {
 }
 
 function activateTab(name) {
-  document.querySelector(`.tab-button[data-tab='${name}']`).click();
+  $$(".tab-button, .mode-option").forEach((item) => {
+    item.classList.toggle("active", item.dataset.tab === name);
+  });
+  $$(".panel").forEach((panel) => panel.classList.remove("active"));
+  $(`#${name}Panel`).classList.add("active");
 }
 
 function persistState() {
@@ -569,6 +690,58 @@ function buildRouteTableText() {
   return [
     "Router\tRed destino\tMáscara\tSiguiente salto\tExplicación",
     ...result.routes.map((route) => `${route.router}\t${route.network}\t${route.mask}\t${route.nextHop}\t${route.explanation}`)
+  ].join("\n");
+}
+
+function buildCiscoBasicsText() {
+  return CISCO_BASICS.map((group) => [
+    `${group.title} (${group.device})`,
+    group.note,
+    ...group.commands
+  ].join("\n")).join("\n\n");
+}
+
+function buildPacketTracerText() {
+  const result = state.lastSubnet;
+  if (!result) return "Sin comandos por equipo.";
+  return result.subnets.map((subnet) => buildPacketTracerBlock(result, subnet)).join("\n\n");
+}
+
+function buildPacketTracerBlock(result, subnet) {
+  const network = intToIp(subnet.red);
+  const broadcast = intToIp(subnet.broadcast);
+  const serverMode = result.input.serverMode === "combined" ? "Servidor único" : "Servidores separados";
+  const clientIpInt = subnet.red + 2;
+  const lastUsable = subnet.broadcast - 1;
+  const clientIp = clientIpInt < lastUsable ? intToIp(clientIpInt) : "Asignar manualmente si hay IP libre";
+  const dnsLine = result.input.serverMode === "combined"
+    ? `Servidor único: ${subnet.web} / ${result.mask} / gateway ${subnet.gateway} / DNS ${subnet.web}`
+    : `DNS: ${subnet.dns} / DHCP: ${subnet.dhcp} / WEB: ${subnet.web}`;
+
+  return [
+    `SUBRED ${subnet.number}: ${network}/${result.newCidr}`,
+    `Máscara: ${result.mask}`,
+    `Broadcast: ${broadcast}`,
+    `Modo: ${serverMode}`,
+    "",
+    "Router o gateway",
+    "enable",
+    "configure terminal",
+    "interface g0/0",
+    `ip address ${subnet.gateway} ${result.mask}`,
+    "no shutdown",
+    "exit",
+    "end",
+    "write memory",
+    "",
+    "PC cliente",
+    `IP address: ${clientIp}`,
+    `Subnet mask: ${result.mask}`,
+    `Default gateway: ${subnet.gateway}`,
+    `DNS server: ${subnet.dns}`,
+    "",
+    "Servidores",
+    dnsLine
   ].join("\n");
 }
 
@@ -669,3 +842,66 @@ function registerServiceWorker() {
       $("#pwaStatus").textContent = "Offline no disponible";
     });
 }
+
+const CISCO_BASICS = [
+  {
+    title: "Entrar a configuración global",
+    device: "Router o switch",
+    note: "Se usa antes de cambiar interfaces, rutas, hostname o servicios.",
+    commands: ["enable", "configure terminal"]
+  },
+  {
+    title: "Cambiar nombre del equipo",
+    device: "Router o switch",
+    note: "Sirve para identificar R1, R2, SW1, etc. en la práctica.",
+    commands: ["enable", "configure terminal", "hostname R1"]
+  },
+  {
+    title: "Configurar gateway de una LAN",
+    device: "Router",
+    note: "Se aplica en la interfaz conectada a la LAN. Cambia g0/0 si tu puerto es otro.",
+    commands: ["enable", "configure terminal", "interface g0/0", "ip address 172.23.6.1 255.255.255.0", "no shutdown", "exit"]
+  },
+  {
+    title: "Configurar enlace entre routers",
+    device: "Router",
+    note: "Se usa en interfaces punto a punto entre routers.",
+    commands: ["enable", "configure terminal", "interface g0/1", "ip address 10.0.0.1 255.255.255.252", "no shutdown", "exit"]
+  },
+  {
+    title: "Crear ruta estática por siguiente salto",
+    device: "Router",
+    note: "Es el comando central de los ejercicios de enrutamiento estático.",
+    commands: ["enable", "configure terminal", "ip route 172.23.7.0 255.255.255.0 10.0.0.2"]
+  },
+  {
+    title: "Ver interfaces y estado",
+    device: "Router o switch",
+    note: "Útil para revisar si una interfaz está up/up y si la IP quedó correcta.",
+    commands: ["show ip interface brief"]
+  },
+  {
+    title: "Ver tabla de enrutamiento",
+    device: "Router",
+    note: "Permite confirmar redes conectadas y rutas estáticas marcadas con S.",
+    commands: ["show ip route"]
+  },
+  {
+    title: "Probar conectividad",
+    device: "PC o router",
+    note: "En PC se usa desde Command Prompt; en router desde modo privilegiado.",
+    commands: ["PC: ping 172.23.7.1", "PC: tracert 172.23.7.1", "Router: ping 172.23.7.1", "Router: traceroute 172.23.7.1"]
+  },
+  {
+    title: "Guardar configuración",
+    device: "Router o switch",
+    note: "Evita perder cambios al reiniciar el equipo.",
+    commands: ["end", "write memory"]
+  },
+  {
+    title: "Configurar PC manualmente",
+    device: "PC en Packet Tracer",
+    note: "Se hace en Desktop > IP Configuration, no en CLI.",
+    commands: ["IP address: 172.23.6.2", "Subnet mask: 255.255.255.0", "Default gateway: 172.23.6.1", "DNS server: 172.23.6.252"]
+  }
+];

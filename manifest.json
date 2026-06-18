@@ -1,17 +1,35 @@
 {
-  "name": "Calculadora de Subneteo y Enrutamiento Estático",
-  "short_name": "Subneteo",
+  "name": "SubnetLab",
+  "short_name": "SubnetLab",
   "description": "PWA offline para practicar subneteo IPv4 y rutas estáticas Cisco por IP de siguiente salto.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7f7f2",
-  "theme_color": "#2d6cdf",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='38' fill='%232d6cdf'/%3E%3Cpath d='M45 96h102M96 45v102M59 59l74 74M133 59l-74 74' stroke='white' stroke-width='15' stroke-linecap='round' opacity='.9'/%3E%3Ccircle cx='96' cy='96' r='26' fill='%23f3b33d'/%3E%3C/svg%3E",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
